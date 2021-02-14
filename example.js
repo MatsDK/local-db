@@ -13,10 +13,10 @@ const test = async () => {
   //   date: new Date(),
   // };
 
-  await loc.collection("col").find({ id: 2 }, (err, docs) => {
-    if (err) throw err;
-    console.log(docs);
-  });
+  // await loc.collection("col").find({ id: 2 }, (err, docs) => {
+  //   if (err) throw err;
+  //   console.log(docs);
+  // });
 
   // await loc.collection("col").findOne({ userId: 2 }, (err, docs) => {
   //   if (err) throw err;
