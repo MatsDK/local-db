@@ -5,20 +5,77 @@ const filterItems = require("./findItems");
 
 module.exports = reqHandler = async (conn, req) => {
   try {
-    if (req.insertItem) insertItem(conn, req);
-    else if (req.findItem) findItem(conn, req);
-    else if (req.createLocation) createLocation(conn, req);
-    else if (req.createCollection) createCollection(conn, req);
-    else if (req.getLocations) getLocations(conn);
-    else if (req.getCollections) getCollections(conn, req);
+    switch (true) {
+      case req.getCollections:
+        getCollections(conn, req);
+        break;
+      case req.getLocations:
+        getLocations(conn);
+        break;
+      case req.insertItem:
+        insertItem(conn, req);
+        break;
+      case req.findItem:
+        findItem(conn, req);
+        break;
+      case req.createLocation:
+        createLocation(conn, req);
+        break;
+      case req.createCollection:
+        createCollection(conn, req);
+        break;
+      case req.deleteLocation:
+        deleteLocation(conn, req);
+        break;
+      case req.deleteCollection:
+        deleteCollection(conn, req);
+      default:
+        return;
+    }
   } catch (err) {
-    conn.write(JSON.stringify({ err: err.message }));
+    conn.write(JSON.stringify({ err }));
   }
+};
+
+const deleteCollection = (conn, req) => {
+  const locs = BSON.deserialize(fs.readFileSync("./data/dbData"));
+  const loc = locs.dbs.find((x) => x.name === req.location);
+  if (!loc) return conn.write(JSON.stringify({ err: "jkl not found" }));
+
+  const col = loc.collections.find((x) => x.name === req.name);
+  if (!col) return conn.write(JSON.stringify({ err: "collection not found" }));
+
+  if (fs.existsSync(`./data/collection-${col.colId}`))
+    fs.unlinkSync(`./data/collection-${col.colId}`);
+
+  loc.collections.forEach((x, i) => {
+    if (x.colId === col.colId) loc.collections.splice(i, 1);
+  });
+
+  fs.writeFileSync("./data/dbData", BSON.serialize(locs));
+  conn.write(JSON.stringify({ err: false }));
+};
+
+const deleteLocation = (conn, req) => {
+  const locs = BSON.deserialize(fs.readFileSync("./data/dbData"));
+  const loc = locs.dbs.find((x) => x.name === req.name);
+  if (!loc) return conn.write(JSON.stringify({ err: "location not found" }));
+
+  loc.collections.forEach((collection) => {
+    const path = `./data/collection-${collection.colId}`;
+    if (fs.existsSync(path)) fs.unlinkSync(path);
+  });
+
+  locs.dbs.forEach((x, i) => {
+    if (x.locId === loc.locId) locs.dbs.splice(i, 1);
+  });
+
+  fs.writeFileSync("./data/dbData", BSON.serialize(locs));
+  conn.write(JSON.stringify({ err: false }));
 };
 
 const findItem = (conn, req) => {
   const locs = BSON.deserialize(fs.readFileSync("./data/dbData"));
-
   const loc = locs.dbs.find((x) => x.name === req.location);
   if (!loc) return conn.write(JSON.stringify({ err: "location not found" }));
 
@@ -28,8 +85,8 @@ const findItem = (conn, req) => {
   const data = BSON.deserialize(
     fs.readFileSync(`./data/collection-${col.colId}`)
   );
-
   const items = filterItems(data.items, req);
+
   conn.write(JSON.stringify({ items }));
 };
 
@@ -102,7 +159,7 @@ const getCollections = (conn, req) => {
 
   const loc = dbs.dbs.find((x) => x.name === req.location);
 
-  if (!loc) return conn.write(JSON.stringify({ err: "location node found" }));
+  if (!loc) return conn.write(JSON.stringify({ err: "location not found" }));
 
   conn.write(JSON.stringify({ err: false, collections: loc.collections }));
 };

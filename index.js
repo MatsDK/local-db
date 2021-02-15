@@ -4,16 +4,14 @@ const { nanoid } = require("nanoid");
 const net = require("net");
 const reqHandler = require("./utils/reqHandler");
 
-if (!fs.existsSync("./data/users")) {
+if (!fs.existsSync("./data/users"))
   fs.writeFileSync(
     "./data/users",
     BSON.serialize({ users: [{ name: "admin", dbToken: nanoid() }] })
   );
-}
 
-if (!fs.existsSync("./data/dbData")) {
+if (!fs.existsSync("./data/dbData"))
   fs.writeFileSync("./data/dbData", BSON.serialize({ dbs: [] }));
-}
 
 const server = net.createServer((conn) => {
   conn.on("data", (data) => {
