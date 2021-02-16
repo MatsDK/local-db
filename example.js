@@ -5,11 +5,6 @@ const run = async () => {
 
   const loc = api.location("1", conn.apiConfig);
 
-  // const newItem = {
-  //   userId: 222,
-  //   id: 6,
-  // };
-
   // await loc.collection("1").delete((err) => {
   //   if (err) throw err;
   // });
@@ -22,6 +17,8 @@ const run = async () => {
   //   if (err) throw err;
   // });
 
+  // ##################################### OLD #####################################
+
   // await loc.collection("col").findOne({ userId: 2 }, (err, docs) => {
   //   if (err) throw err;
   //   console.log(docs);
@@ -31,6 +28,22 @@ const run = async () => {
   //   if (err) throw err;
   //   console.log(docs);
   // });
+
+  // ###################################### NEW ####################################
+
+  await loc
+    .collection("1")
+    .find({ userId: "test" }, { _skip: 21 }, (err, docs) => {
+      if (err) throw err;
+      console.log(docs);
+    });
+
+  // await loc.collection("1").findOne({ id: 2 }, (err, docs) => {
+  //   if (err) throw err;
+  //   console.log(docs);
+  // });
+
+  // ###############################################################################
 
   // await loc.showCollections((err, cols) => {
   //   if (err) throw err;
@@ -61,6 +74,11 @@ const run = async () => {
   //     console.log(doc);
   //   });
   // }
+
+  //   await loc.collection("1").find((err, docs) => {
+  //     if (err) throw err;
+  //     console.log(docs);
+  //   });
 };
 
 run();
