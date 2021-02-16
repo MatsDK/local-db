@@ -21,7 +21,7 @@ const server = net.createServer((conn) => {
       const data = BSON.deserialize(fs.readFileSync("./data/users"));
       const user = data.users.find((x) => x.name === "admin");
 
-      if (!user) return conn.write("not valid");
+      if (!user) return conn.write(JSON.stringify({ err: "not valid user" }));
 
       return conn.write(JSON.stringify({ user, loc: req.loc }));
     } else reqHandler(conn, req);
@@ -31,7 +31,7 @@ const server = net.createServer((conn) => {
   conn.once("close", () => {});
 
   conn.once("error", (err) => {
-    console.log(err);
+    if (err) throw err;
   });
 });
 

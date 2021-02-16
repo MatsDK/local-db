@@ -29,6 +29,10 @@ module.exports = reqHandler = async (conn, req) => {
         break;
       case req.deleteCollection:
         deleteCollection(conn, req);
+        break;
+      case req.findAndDelete:
+        findAndDelete(conn, req);
+        break;
       default:
         return;
     }
@@ -37,10 +41,52 @@ module.exports = reqHandler = async (conn, req) => {
   }
 };
 
+const findAndDelete = (conn, req) => {
+  const locs = BSON.deserialize(fs.readFileSync("./data/dbData"));
+  const loc = locs.dbs.find((x) => x.name === req.location);
+  if (!loc) return conn.write(JSON.stringify({ err: "location not found" }));
+
+  const col = loc.collections.find((x) => x.name === req.col);
+  if (!col) return conn.write(JSON.stringify({ err: "collection not found" }));
+
+  const data = BSON.deserialize(
+    fs.readFileSync(`./data/collection-${col.colId}`)
+  );
+
+  if (req.limit === null) req.limit = Infinity;
+
+  if (!req.deleteAll) {
+    let changed = 0;
+    for (let i = 0; i < data.items.length; i++) {
+      if (changed + 1 > req.limit) break;
+
+      const keys = Object.keys(req.searchQuery).map((x) => [
+        x,
+        req.searchQuery[x],
+      ]);
+
+      let isValid = true;
+      keys.forEach((x) => {
+        if (data.items[i][x[0]] !== x[1]) isValid = false;
+      });
+
+      if (isValid) {
+        changed++;
+        data.items.splice(i, 1);
+        i--;
+      }
+    }
+  } else data.items = [];
+
+  fs.writeFileSync(`./data/collection-${col.colId}`, BSON.serialize(data));
+
+  conn.write(JSON.stringify({ err: false }));
+};
+
 const deleteCollection = (conn, req) => {
   const locs = BSON.deserialize(fs.readFileSync("./data/dbData"));
   const loc = locs.dbs.find((x) => x.name === req.location);
-  if (!loc) return conn.write(JSON.stringify({ err: "jkl not found" }));
+  if (!loc) return conn.write(JSON.stringify({ err: "location not found" }));
 
   const col = loc.collections.find((x) => x.name === req.name);
   if (!col) return conn.write(JSON.stringify({ err: "collection not found" }));
