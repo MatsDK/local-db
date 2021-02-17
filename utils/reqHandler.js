@@ -1,5 +1,6 @@
 const fs = require("fs");
 const BSON = require("bson");
+const updateItems = require("./updateItems");
 const filterItems = require("./findItems");
 const { createLocation, createCollection } = require("./create");
 const { deleteCollection, deleteLocation, findAndDelete } = require("./delete");
@@ -35,12 +36,34 @@ module.exports = reqHandler = async (conn, req) => {
         findAndDelete(conn, req);
         break;
 
+      case req.update:
+        update(conn, req);
+        break;
+
       default:
         return;
     }
   } catch (err) {
     conn.write(JSON.stringify({ err }));
   }
+};
+
+const update = (conn, req) => {
+  if (req.limit === null) req.limit = Infinity;
+  const locs = BSON.deserialize(fs.readFileSync("./data/dbData"));
+  const loc = locs.dbs.find((x) => x.name === req.location);
+  if (!loc) return conn.write(JSON.stringify({ err: "location not found" }));
+
+  const col = loc.collections.find((x) => x.name === req.col);
+  if (!col) return conn.write(JSON.stringify({ err: "collection not found" }));
+
+  const data = BSON.deserialize(
+    fs.readFileSync(`./data/collection-${col.colId}`)
+  );
+
+  const { returnArr, items } = updateItems(data.items, req);
+  fs.writeFileSync(`./data/collection-${col.colId}`, BSON.serialize({ items }));
+  conn.write(JSON.stringify({ returnArr }));
 };
 
 const findItem = (conn, req) => {
@@ -61,7 +84,6 @@ const findItem = (conn, req) => {
 
 const insertItem = (conn, req) => {
   const locs = BSON.deserialize(fs.readFileSync("./data/dbData")).dbs;
-
   const loc = locs.find((x) => x.name === req.location);
   if (!loc) return conn.write(JSON.stringify({ err: "location not found" }));
 

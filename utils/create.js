@@ -1,5 +1,6 @@
 const { nanoid } = require("nanoid");
 const BSON = require("bson");
+const fs = require("fs");
 
 const createLocation = (conn, req) => {
   const dbs = BSON.deserialize(fs.readFileSync("./data/dbData"));

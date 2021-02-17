@@ -16,15 +16,11 @@ module.exports = filterItems = (items, req) => {
     }
     if (req.limit) returnArr.length = req.limit;
 
-    return returnArr.filter((el) => {
-      return el !== null;
-    });
+    return returnArr.filter((el) => el !== null);
   } else {
     if (req.skip) items.splice(0, req.skip).length;
     if (req.limit) items.length = req.limit;
 
-    return items.filter((el) => {
-      return el !== null;
-    });
+    return items.filter((el) => el !== null);
   }
 };

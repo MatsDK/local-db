@@ -1,45 +1,61 @@
 const BSON = require("bson");
+const fs = require("fs");
 
 const findAndDelete = (conn, req) => {
-  const locs = BSON.deserialize(fs.readFileSync("./data/dbData"));
-  const loc = locs.dbs.find((x) => x.name === req.location);
-  if (!loc) return conn.write(JSON.stringify({ err: "location not found" }));
+  try {
+    const locs = BSON.deserialize(fs.readFileSync("./data/dbData"));
+    const loc = locs.dbs.find((x) => x.name === req.location);
+    if (!loc) return conn.write(JSON.stringify({ err: "location not found" }));
 
-  const col = loc.collections.find((x) => x.name === req.col);
-  if (!col) return conn.write(JSON.stringify({ err: "collection not found" }));
+    const col = loc.collections.find((x) => x.name === req.col);
+    if (!col)
+      return conn.write(JSON.stringify({ err: "collection not found" }));
 
-  const data = BSON.deserialize(
-    fs.readFileSync(`./data/collection-${col.colId}`)
-  );
+    const data = BSON.deserialize(
+      fs.readFileSync(`./data/collection-${col.colId}`)
+    );
 
-  if (req.limit === null) req.limit = Infinity;
+    if (req.limit === null) req.limit = Infinity;
 
-  if (!req.deleteAll) {
-    let changed = 0;
-    for (let i = 0; i < data.items.length; i++) {
-      if (changed + 1 > req.limit) break;
+    if (!req.findAll) {
+      let changed = 0,
+        skipped = 0;
+      if (req.limit === undefined) req.limit = Infinity;
+      for (let i = 0; i < data.items.length; i++) {
+        if (changed + 1 > req.limit) break;
 
-      const keys = Object.keys(req.searchQuery).map((x) => [
-        x,
-        req.searchQuery[x],
-      ]);
+        const keys = Object.keys(req.searchQuery).map((x) => [
+          x,
+          req.searchQuery[x],
+        ]);
 
-      let isValid = true;
-      keys.forEach((x) => {
-        if (data.items[i][x[0]] !== x[1]) isValid = false;
-      });
+        let isValid = true;
+        keys.forEach((x) => {
+          if (data.items[i][x[0]] !== x[1]) isValid = false;
+        });
 
-      if (isValid) {
-        changed++;
-        data.items.splice(i, 1);
-        i--;
+        if (!isValid) continue;
+        if (skipped >= req.skip) {
+          changed++;
+          data.items.splice(i, 1);
+          i--;
+        }
+        skipped++;
       }
+    } else {
+      if (req.limit === undefined) req.limit = Infinity;
+      if (req.skip === undefined) req.skip = 0;
+
+      data.items.splice(req.skip, req.limit);
+      data.items.filter((el) => el !== null);
     }
-  } else data.items = [];
 
-  fs.writeFileSync(`./data/collection-${col.colId}`, BSON.serialize(data));
+    fs.writeFileSync(`./data/collection-${col.colId}`, BSON.serialize(data));
 
-  conn.write(JSON.stringify({ err: false }));
+    conn.write(JSON.stringify({ err: false }));
+  } catch (err) {
+    throw err;
+  }
 };
 
 const deleteCollection = (conn, req) => {
