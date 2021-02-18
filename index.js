@@ -35,7 +35,7 @@ const server = net.createServer((conn) => {
   });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, "127.0.0.1", () =>
   console.log(`TCP server running on port ${PORT}`)
