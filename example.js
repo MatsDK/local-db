@@ -1,8 +1,8 @@
 const { api, connect } = require("./lib/bundle");
 
-const run = async () => {
+const example = async () => {
   const conn = await connect({ port: 3000, host: "127.0.0.1" });
-  const loc = api.location("0", conn.apiConfig);
+  const loc = api.location("loc", conn.apiConfig);
 
   // await loc
   //   .collection("col")
@@ -33,11 +33,15 @@ const run = async () => {
   //     if (err) throw err;
   //   });
 
+  // await conn.deleteLocation("loc", (err) => {
+  //   if (err) throw err;
+  // });
+
   // await loc.deleteCollection("col", (err) => {
   //   if (err) throw err;
   // });
 
-  // await conn.deleteLocation("loc", (err) => {
+  // await loc.deleteAllCollections((err) => {
   //   if (err) throw err;
   // });
 
@@ -82,6 +86,11 @@ const run = async () => {
   //   if (err) throw err;
   //   console.log(doc);
   // });
+
+  // await loc.collection("col").countDocs((err, count) => {
+  //   if (err) throw err;
+  //   console.log(count);
+  // });
 };
 
-run();
+example();

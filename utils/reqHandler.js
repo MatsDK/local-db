@@ -88,7 +88,6 @@ const insertItem = async (conn, req) => {
   let loc = locs.find((x) => x.name === req.location);
   if (!loc) {
     const err = createLoc({ name: req.location });
-    console.log("create loc", err);
     if (err) return conn.write(JSON.stringify({ err }));
     loc = { name: req.location, collections: [] };
   }

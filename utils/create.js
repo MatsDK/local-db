@@ -23,18 +23,17 @@ const createLoc = ({ name }) => {
 };
 
 const createCollection = (conn, req) => {
-  const err = craeteCol({ locName: req.loc, colName: req.colName });
+  const err = createCol({ locName: req.loc, colName: req.colName });
   conn.write(JSON.stringify({ err: err.err }));
 };
 
 const createCol = ({ locName, colName }) => {
   const dbs = BSON.deserialize(fs.readFileSync("./data/dbData"));
-
   const loc = dbs.dbs.find((x) => x.name === locName);
-  if (!loc) return "location not found";
+  if (!loc) return { err: "location not found" };
 
   if (loc.collections.find((x) => x.name === colName))
-    return "collection already exists";
+    return { err: "collection already exists" };
 
   const colId = nanoid();
   loc.collections.push({ name: colName, colId });
