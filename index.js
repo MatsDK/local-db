@@ -4,6 +4,8 @@ const { nanoid } = require("nanoid");
 const net = require("net");
 const reqHandler = require("./utils/reqHandler");
 
+if (!fs.existsSync("./data")) fs.mkdirSync("./data");
+
 if (!fs.existsSync("./data/users"))
   fs.writeFileSync(
     "./data/users",
